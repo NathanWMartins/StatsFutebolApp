@@ -1,6 +1,10 @@
 import { ArrowRight, BarChart3, Trophy, Users, Zap } from "lucide-react";
+import { useState } from "react";
+import LoginModal from "../components/auth/LoginModal";
 
 function Home() {
+  const [loginOpen, setLoginOpen] = useState(false);
+
   return (
     <main className="home">
       <section className="hero">
@@ -22,12 +26,18 @@ function Home() {
           </p>
 
           <div className="hero-actions">
-            <button className="button button-primary">
+            <button
+              className="button button-primary"
+              onClick={() => setLoginOpen(true)}
+            >
               Criar meu grupo
               <ArrowRight size={18} />
             </button>
 
-            <button className="button button-secondary">
+            <button
+              className="button button-secondary"
+              onClick={() => setLoginOpen(true)}
+            >
               Já tenho um grupo
             </button>
           </div>
@@ -180,6 +190,10 @@ function Home() {
           Feito para quem joga com os amigos.
         </span>
       </footer>
+      <LoginModal
+        open={loginOpen}
+        onClose={() => setLoginOpen(false)}
+      />
     </main>
   );
 }
