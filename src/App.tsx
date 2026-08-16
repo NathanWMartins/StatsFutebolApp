@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Groups from "./pages/Groups";
 import Group from "./pages/Group";
 import JoinGroup from "./pages/JoinGroup";
+import MatchDetails from "./pages/MatchDetails";
 
 function App() {
   return (
@@ -12,6 +13,10 @@ function App() {
 
       <Route path="/groups" element={<Groups />} />
       <Route path="/groups/:groupId" element={<Group />} />
+      <Route
+        path="/groups/:groupId/matches/:matchId"
+        element={<MatchDetails />}
+      />
       <Route path="/join/:inviteCode" element={<JoinGroup />} />
 
       <Route

@@ -4,6 +4,7 @@ import {
     ImagePlus,
     Minus,
     Plus,
+    Star,
     Trash2,
     Trophy,
     X,
@@ -257,11 +258,11 @@ function RegisterMatchModal({
         }
 
         if (
-            teamAPlayers.length === 0 ||
+            teamAPlayers.length === 0 &&
             teamBPlayers.length === 0
         ) {
             setError(
-                "Selecione pelo menos um jogador para cada time.",
+                "Selecione pelo menos um jogador.",
             );
 
             return false;
@@ -1107,7 +1108,13 @@ function RegisterMatchModal({
                                                                 )
                                                             }
                                                         >
-                                                            ⭐{" "}
+                                                            <Star
+                                                                size={14}
+                                                                style={{
+                                                                    verticalAlign: "-2px",
+                                                                    marginRight: 4,
+                                                                }}
+                                                            />
                                                             {stats?.mvp
                                                                 ? "MVP selecionado"
                                                                 : "Marcar como MVP"}

@@ -4,6 +4,7 @@ import {
     Users,
     Trophy,
     Plus,
+    Goal,
 } from "lucide-react";
 
 import {
@@ -28,11 +29,19 @@ import {
 import InviteGroupModal from "../components/groups/InviteGroupModal";
 import GroupSettingsModal from "../components/groups/GroupSettingsModal";
 import RegisterMatchModal from "../components/matches/RegisterMatchModal";
+import { getGroupMatches, type Match } from "../services/matches";
+import MatchCard from "../components/groups/MatchCard";
 
 function Group() {
     const navigate = useNavigate();
     const { groupId } = useParams();
     const { user } = useAuth();
+
+    const [matches, setMatches] =
+        useState<Match[]>([]);
+
+    const [loadingMatches, setLoadingMatches] =
+        useState(true);
 
     const [group, setGroup] =
         useState<GroupType | null>(null);
@@ -65,10 +74,18 @@ function Group() {
 
             try {
                 setLoading(true);
+                setLoadingMatches(true);
                 setError("");
 
-                const groupData =
-                    await getGroupById(groupId);
+                const [
+                    groupData,
+                    groupMembers,
+                    groupMatches,
+                ] = await Promise.all([
+                    getGroupById(groupId),
+                    getGroupMembers(groupId),
+                    getGroupMatches(groupId),
+                ]);
 
                 if (!groupData) {
                     setError(
@@ -78,11 +95,9 @@ function Group() {
                     return;
                 }
 
-                const groupMembers =
-                    await getGroupMembers(groupId);
-
                 setGroup(groupData);
                 setMembers(groupMembers);
+                setMatches(groupMatches);
             } catch (error) {
                 console.error(
                     "Erro ao carregar grupo:",
@@ -94,11 +109,34 @@ function Group() {
                 );
             } finally {
                 setLoading(false);
+                setLoadingMatches(false);
             }
         };
 
         loadGroup();
     }, [groupId]);
+
+    const refreshMatches = async () => {
+        if (!groupId) {
+            return;
+        }
+
+        try {
+            setLoadingMatches(true);
+
+            const groupMatches =
+                await getGroupMatches(groupId);
+
+            setMatches(groupMatches);
+        } catch (error) {
+            console.error(
+                "Erro ao atualizar partidas:",
+                error,
+            );
+        } finally {
+            setLoadingMatches(false);
+        }
+    };
 
     /*
      * LOADING
@@ -120,7 +158,7 @@ function Group() {
 
                         <div className="group-header-info">
                             <span className="group-header-icon">
-                                ⚽
+                                <Goal size={18} />
                             </span>
 
                             <div>
@@ -139,7 +177,7 @@ function Group() {
                 <main className="group-content">
                     <div className="group-loading-state">
                         <div className="group-loading-icon">
-                            ⚽
+                            <Goal size={24} />
                         </div>
 
                         <h2>
@@ -176,7 +214,7 @@ function Group() {
 
                         <div className="group-header-info">
                             <span className="group-header-icon">
-                                ⚽
+                                <Goal size={18} />
                             </span>
 
                             <div>
@@ -246,7 +284,7 @@ function Group() {
                     <div className="group-header-info">
 
                         <span className="group-header-icon">
-                            ⚽
+                            <Goal size={18} />
                         </span>
 
                         <div>
@@ -343,7 +381,7 @@ function Group() {
                     <div className="group-stat-card">
 
                         <div className="group-stat-icon">
-                            ⚽
+                            <Goal size={19} />
                         </div>
 
                         <div>
@@ -353,7 +391,7 @@ function Group() {
                             </span>
 
                             <strong>
-                                0
+                                {matches.length}
                             </strong>
 
                         </div>
@@ -481,60 +519,84 @@ function Group() {
 
                 {/* MATCHES */}
 
-                <section className="group-section">
-
-                    <div className="group-section-header">
-
+                <section className="group-section matches-section">
+                    <div className="section-title">
                         <div>
-
                             <span className="eyebrow">
-                                ATIVIDADE
+                                HISTÓRICO
                             </span>
 
+                            <h2>Últimas partidas</h2>
+                        </div>
+
+                        <span>
+                            {matches.length}{" "}
+                            {matches.length === 1
+                                ? "partida"
+                                : "partidas"}
+                        </span>
+                    </div>
+
+                    {loadingMatches ? (
+                        <div className="empty-groups">
+                            <div className="empty-icon">
+                                <Goal size={25} />
+                            </div>
+
                             <h3>
-                                Últimos jogos
+                                Carregando partidas...
                             </h3>
 
+                            <p>
+                                Buscando o histórico do
+                                grupo.
+                            </p>
                         </div>
+                    ) : matches.length === 0 ? (
+                        <div className="empty-groups">
+                            <div className="empty-icon">
+                                <Trophy size={25} />
+                            </div>
 
-                        <button className="text-button">
-                            Ver todos
-                        </button>
+                            <h3>
+                                Nenhuma partida registrada
+                            </h3>
 
-                    </div>
+                            <p>
+                                Registre a primeira partida
+                                para começar a construir o
+                                histórico do grupo.
+                            </p>
 
-                    <div className="group-empty-state">
-
-                        <div className="group-empty-icon">
-                            ⚽
-                        </div>
-
-                        <h3>
-                            Nenhum jogo registrado
-                        </h3>
-
-                        <p>
-                            Registre a primeira
-                            partida para começar
-                            a construir as
-                            estatísticas do grupo.
-                        </p>
-
-                        {isAdmin && (
                             <button
                                 className="button button-primary"
+                                onClick={() =>
+                                    setRegisterMatchOpen(true)
+                                }
                             >
-                                Registrar primeiro jogo
+                                Registrar primeira partida
                             </button>
-                        )}
-
-                    </div>
-
+                        </div>
+                    ) : (
+                        <div className="matches-grid">
+                            {matches.map((match) => (
+                                <MatchCard
+                                    key={match.id}
+                                    match={match}
+                                    onClick={() => {
+                                        navigate(
+                                            `/groups/${group.id}/matches/${match.id}`,
+                                        );
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </section>
 
                 {/* RANKING */}
 
-                <section className="group-section">
+                {/* <section className="group-section">
 
                     <div className="group-section-header">
 
@@ -555,7 +617,7 @@ function Group() {
                     <div className="ranking-placeholder">
 
                         <span>
-                            🏆
+                            <Trophy size={22} />
                         </span>
 
                         <p>
@@ -566,7 +628,7 @@ function Group() {
 
                     </div>
 
-                </section>
+                </section> */}
 
             </main>
             <GroupSettingsModal
@@ -595,7 +657,7 @@ function Group() {
                 group={group}
                 members={members}
                 onCreated={() => {
-                    console.log("Partida registrada.");
+                    refreshMatches();
                 }}
             />
             <InviteGroupModal

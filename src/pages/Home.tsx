@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, Trophy, Users, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, Goal, Trophy, Users, Zap } from "lucide-react";
 import { useState } from "react";
 import LoginModal from "../components/auth/LoginModal";
 
@@ -56,7 +56,7 @@ function Home() {
                 <h3>Artilharia</h3>
               </div>
 
-              <div className="ball-icon">⚽</div>
+              <div className="ball-icon"><Goal size={20} /></div>
             </div>
 
             <div className="player-list">
@@ -70,7 +70,9 @@ function Home() {
                   <span>18 jogos</span>
                 </div>
 
-                <strong className="goals">24 ⚽</strong>
+                <strong className="goals">
+                  24 <Goal size={13} style={{ verticalAlign: "-2px" }} />
+                </strong>
               </div>
 
               <div className="player">
@@ -83,7 +85,9 @@ function Home() {
                   <span>17 jogos</span>
                 </div>
 
-                <strong className="goals">18 ⚽</strong>
+                <strong className="goals">
+                  18 <Goal size={13} style={{ verticalAlign: "-2px" }} />
+                </strong>
               </div>
 
               <div className="player">
@@ -96,7 +100,9 @@ function Home() {
                   <span>16 jogos</span>
                 </div>
 
-                <strong className="goals">15 ⚽</strong>
+                <strong className="goals">
+                  15 <Goal size={13} style={{ verticalAlign: "-2px" }} />
+                </strong>
               </div>
             </div>
 
@@ -110,7 +116,7 @@ function Home() {
           </div>
 
           <div className="floating-card floating-card-top">
-            <span>🏆</span>
+            <span><Trophy size={18} /></span>
             <div>
               <strong>Ranking</strong>
               <small>João assumiu a liderança</small>
@@ -118,7 +124,7 @@ function Home() {
           </div>
 
           <div className="floating-card floating-card-bottom">
-            <span>⚽</span>
+            <span><Goal size={18} /></span>
             <div>
               <strong>+24 gols</strong>
               <small>nesta temporada</small>
@@ -182,8 +188,14 @@ function Home() {
       </section>
 
       <footer className="footer">
-        <strong>
-          ⚽ Pelada
+        <strong
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Goal size={16} /> Pelada
         </strong>
 
         <span>

@@ -1,4 +1,4 @@
-import { Copy, Check, X } from "lucide-react";
+import { Copy, Check, X, Share2 } from "lucide-react";
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -60,7 +60,7 @@ function InviteGroupModal({
                 </button>
 
                 <div className="invite-icon">
-                    📤
+                    <Share2 size={20} />
                 </div>
 
                 <span className="eyebrow">

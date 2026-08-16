@@ -1,5 +1,6 @@
 import {
     Check,
+    Goal,
     LogIn,
     Users,
 } from "lucide-react";
@@ -148,7 +149,7 @@ function JoinGroup() {
             <div className="join-page">
                 <div className="join-card">
                     <div className="join-icon">
-                        ⚽
+                        <Goal size={28} />
                     </div>
 
                     <h1>
@@ -202,7 +203,7 @@ function JoinGroup() {
             <div className="join-card">
 
                 <div className="join-icon">
-                    ⚽
+                    <Goal size={28} />
                 </div>
 
                 <span className="eyebrow">

@@ -1,7 +1,12 @@
 import {
     addDoc,
     collection,
+    doc,
+    getDoc,
+    getDocs,
+    query,
     serverTimestamp,
+    where,
 } from "firebase/firestore";
 
 import { db } from "../config/firebase";
@@ -59,4 +64,51 @@ export async function createMatch(
     );
 
     return matchRef.id;
+}
+
+export async function getMatchById(
+    matchId: string,
+): Promise<Match | null> {
+    const matchRef = doc(db, "matches", matchId);
+
+    const matchSnapshot = await getDoc(matchRef);
+
+    if (!matchSnapshot.exists()) {
+        return null;
+    }
+
+    return {
+        id: matchSnapshot.id,
+        ...(matchSnapshot.data() as Omit<Match, "id">),
+    };
+}
+
+export async function getGroupMatches(
+    groupId: string,
+): Promise<Match[]> {
+    const matchesQuery = query(
+        collection(db, "matches"),
+        where("groupId", "==", groupId),
+    );
+
+    const snapshot =
+        await getDocs(matchesQuery);
+
+    return snapshot.docs
+        .map((document) => ({
+            id: document.id,
+            ...(document.data() as Omit<
+                Match,
+                "id"
+            >),
+        }))
+        .sort((a, b) => {
+            const dateA =
+                new Date(a.date).getTime();
+
+            const dateB =
+                new Date(b.date).getTime();
+
+            return dateB - dateA;
+        });
 }

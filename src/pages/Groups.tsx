@@ -4,6 +4,8 @@ import {
     Trophy,
     ArrowRight,
     LogOut,
+    Goal,
+    PartyPopper,
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -59,7 +61,7 @@ function Groups() {
             <header className="dashboard-header">
                 <div className="dashboard-brand">
                     <span className="dashboard-logo">
-                        ⚽
+                        <Goal size={18} />
                     </span>
 
                     <span>Pelada</span>
@@ -109,12 +111,18 @@ function Groups() {
                             MEUS GRUPOS
                         </span>
 
-                        <h1>
+                        <h1
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                            }}
+                        >
                             Olá,{" "}
                             {user?.displayName?.split(
                                 " ",
-                            )[0] || "jogador"}{" "}
-                            👋
+                            )[0] || "jogador"}
+                            <PartyPopper size={20} />
                         </h1>
 
                         <p>
@@ -150,7 +158,7 @@ function Groups() {
                     {loadingGroups ? (
                         <div className="empty-groups">
                             <div className="empty-icon">
-                                ⚽
+                                <Goal size={25} />
                             </div>
 
                             <h3>
@@ -210,7 +218,7 @@ function Groups() {
                                     }}
                                 >
                                     <div className="group-card-icon">
-                                        ⚽
+                                        <Goal size={21} />
                                     </div>
 
                                     <div className="group-card-content">

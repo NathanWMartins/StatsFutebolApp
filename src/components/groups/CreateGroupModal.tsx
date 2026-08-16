@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, ArrowRight } from "lucide-react";
+import { X, ArrowRight, Goal } from "lucide-react";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { createGroup } from "../../services/groups";
@@ -78,7 +78,7 @@ function CreateGroupModal({
                 </button>
 
                 <div className="create-group-icon">
-                    ⚽
+                    <Goal size={22} />
                 </div>
 
                 <h2>Criar seu grupo</h2>

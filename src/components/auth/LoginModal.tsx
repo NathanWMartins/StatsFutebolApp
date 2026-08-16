@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Goal, X } from "lucide-react";
 import { loginWithGoogle } from "../../services/auth";
 import { useNavigate } from "react-router-dom";
 
@@ -41,7 +41,7 @@ function LoginModal({ open, onClose }: LoginModalProps) {
                 </button>
 
                 <div className="login-logo">
-                    ⚽
+                    <Goal size={26} />
                 </div>
 
                 <h2>Entre no Pelada</h2>
