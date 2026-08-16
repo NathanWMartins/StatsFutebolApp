@@ -3,6 +3,7 @@ import {
     Settings,
     Users,
     Trophy,
+    Plus,
 } from "lucide-react";
 
 import {
@@ -25,6 +26,8 @@ import {
 } from "../services/groups";
 
 import InviteGroupModal from "../components/groups/InviteGroupModal";
+import GroupSettingsModal from "../components/groups/GroupSettingsModal";
+import RegisterMatchModal from "../components/matches/RegisterMatchModal";
 
 function Group() {
     const navigate = useNavigate();
@@ -44,6 +47,12 @@ function Group() {
         useState("");
 
     const [inviteModalOpen, setInviteModalOpen] =
+        useState(false);
+
+    const [settingsModalOpen, setSettingsModalOpen] =
+        useState(false);
+
+    const [registerMatchOpen, setRegisterMatchOpen] =
         useState(false);
 
     useEffect(() => {
@@ -257,6 +266,9 @@ function Group() {
                     <button
                         className="group-settings-button"
                         title="Configurações"
+                        onClick={() =>
+                            setSettingsModalOpen(true)
+                        }
                     >
                         <Settings size={18} />
                     </button>
@@ -293,8 +305,12 @@ function Group() {
                     {isAdmin && (
                         <button
                             className="button button-primary"
+                            onClick={() =>
+                                setRegisterMatchOpen(true)
+                            }
                         >
-                            + Registrar jogo
+                            <Plus size={17} />
+                            Registrar partida
                         </button>
                     )}
 
@@ -553,6 +569,35 @@ function Group() {
                 </section>
 
             </main>
+            <GroupSettingsModal
+                open={settingsModalOpen}
+                onClose={() =>
+                    setSettingsModalOpen(false)
+                }
+                group={group}
+                onUpdated={(stats) => {
+                    setGroup((current) =>
+                        current
+                            ? {
+                                ...current,
+                                stats,
+                            }
+                            : current,
+                    );
+                }}
+            />
+            <RegisterMatchModal
+                open={registerMatchOpen}
+                onClose={() =>
+                    setRegisterMatchOpen(false)
+                }
+                groupId={group.id}
+                group={group}
+                members={members}
+                onCreated={() => {
+                    console.log("Partida registrada.");
+                }}
+            />
             <InviteGroupModal
                 open={inviteModalOpen}
                 onClose={() =>

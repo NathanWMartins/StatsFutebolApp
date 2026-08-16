@@ -8,6 +8,7 @@ import {
   where,
   getDocs,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../config/firebase";
@@ -17,6 +18,7 @@ export interface Group {
   name: string;
   ownerId: string;
   inviteCode: string;
+  stats?: GroupStats;
   createdAt?: unknown;
 }
 
@@ -29,6 +31,28 @@ export interface GroupMember {
   role: "admin" | "member";
   joinedAt?: unknown;
 }
+
+export interface GroupStats {
+  goals: boolean;
+  assists: boolean;
+  wins: boolean;
+  losses: boolean;
+  draws: boolean;
+  yellowCards: boolean;
+  redCards: boolean;
+  mvp: boolean;
+}
+
+export const defaultGroupStats: GroupStats = {
+  goals: true,
+  assists: true,
+  wins: true,
+  losses: true,
+  draws: true,
+  yellowCards: false,
+  redCards: false,
+  mvp: true,
+};
 
 export async function getGroupMembers(
   groupId: string,
@@ -57,11 +81,15 @@ export async function createGroup(
     {
       name,
       ownerId: userId,
+
       inviteCode: crypto
         .randomUUID()
         .replace(/-/g, "")
         .substring(0, 8)
         .toUpperCase(),
+
+      stats: defaultGroupStats,
+
       createdAt: serverTimestamp(),
     },
   );
@@ -82,6 +110,21 @@ export async function createGroup(
   });
 
   return groupRef.id;
+}
+
+export async function updateGroupStats(
+  groupId: string,
+  stats: GroupStats,
+): Promise<void> {
+  const groupRef = doc(
+    db,
+    "groups",
+    groupId,
+  );
+
+  await updateDoc(groupRef, {
+    stats,
+  });
 }
 
 export async function getUserGroups(userId: string,): Promise<Group[]> {
