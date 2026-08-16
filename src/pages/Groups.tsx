@@ -15,9 +15,14 @@ import {
     getUserGroups,
     type Group,
 } from "../services/groups";
+import { useNavigate } from "react-router-dom";
 
 function Groups() {
-    const { user } = useAuth();
+    const {
+        user,
+        logout,
+    } = useAuth();
+    const navigate = useNavigate();
 
     const [createGroupOpen, setCreateGroupOpen] = useState(false);
 
@@ -90,6 +95,7 @@ function Groups() {
                     <button
                         className="logout-button"
                         title="Sair"
+                        onClick={logout}
                     >
                         <LogOut size={17} />
                     </button>
@@ -192,6 +198,16 @@ function Groups() {
                                 <div
                                     key={group.id}
                                     className="group-card"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() =>
+                                        navigate(`/groups/${group.id}`)
+                                    }
+                                    onKeyDown={(event) => {
+                                        if (event.key === "Enter") {
+                                            navigate(`/groups/${group.id}`);
+                                        }
+                                    }}
                                 >
                                     <div className="group-card-icon">
                                         ⚽
@@ -204,16 +220,20 @@ function Groups() {
 
                                         <span>
                                             {group.ownerId ===
-                                            user?.uid
+                                                user?.uid
                                                 ? "Administrador"
                                                 : "Membro"}
                                         </span>
                                     </div>
 
-                                    <button className="group-card-arrow">
-                                        <ArrowRight
-                                            size={18}
-                                        />
+                                    <button
+                                        className="group-card-arrow"
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            navigate(`/groups/${group.id}`);
+                                        }}
+                                    >
+                                        <ArrowRight size={18} />
                                     </button>
                                 </div>
                             ))}

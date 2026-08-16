@@ -43,6 +43,8 @@ function CreateGroupModal({
             const groupId = await createGroup(
                 user.uid,
                 name.trim(),
+                user.displayName || "Jogador",
+                user.photoURL,
             );
 
             setName("");
