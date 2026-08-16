@@ -398,26 +398,6 @@ function Group() {
 
                     </div>
 
-                    <div className="group-stat-card">
-
-                        <div className="group-stat-icon">
-                            <Trophy size={19} />
-                        </div>
-
-                        <div>
-
-                            <span>
-                                CAMPEÃO
-                            </span>
-
-                            <strong>
-                                —
-                            </strong>
-
-                        </div>
-
-                    </div>
-
                 </section>
 
                 {/* MEMBERS */}
