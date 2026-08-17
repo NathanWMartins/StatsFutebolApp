@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   setDoc,
   serverTimestamp,
@@ -9,6 +10,7 @@ import {
   getDocs,
   getDoc,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 
 import { db } from "../config/firebase";
@@ -125,6 +127,65 @@ export async function updateGroupStats(
   await updateDoc(groupRef, {
     stats,
   });
+}
+
+export async function updateGroupName(
+  groupId: string,
+  name: string,
+): Promise<void> {
+  const groupRef = doc(
+    db,
+    "groups",
+    groupId,
+  );
+
+  await updateDoc(groupRef, {
+    name,
+  });
+}
+
+export async function removeGroupMember(
+  memberId: string,
+): Promise<void> {
+  const memberRef = doc(
+    db,
+    "groupMembers",
+    memberId,
+  );
+
+  await deleteDoc(memberRef);
+}
+
+export async function deleteGroup(
+  groupId: string,
+): Promise<void> {
+  const batch = writeBatch(db);
+
+  const membersSnapshot = await getDocs(
+    query(
+      collection(db, "groupMembers"),
+      where("groupId", "==", groupId),
+    ),
+  );
+
+  membersSnapshot.forEach((memberDoc) => {
+    batch.delete(memberDoc.ref);
+  });
+
+  const matchesSnapshot = await getDocs(
+    query(
+      collection(db, "matches"),
+      where("groupId", "==", groupId),
+    ),
+  );
+
+  matchesSnapshot.forEach((matchDoc) => {
+    batch.delete(matchDoc.ref);
+  });
+
+  batch.delete(doc(db, "groups", groupId));
+
+  await batch.commit();
 }
 
 export async function getUserGroups(userId: string,): Promise<Group[]> {

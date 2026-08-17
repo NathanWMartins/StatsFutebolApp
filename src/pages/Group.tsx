@@ -5,6 +5,7 @@ import {
     Trophy,
     Plus,
     Goal,
+    UserX,
 } from "lucide-react";
 
 import {
@@ -22,6 +23,7 @@ import { useAuth } from "../contexts/AuthContext";
 import {
     getGroupById,
     getGroupMembers,
+    removeGroupMember,
     type Group as GroupType,
     type GroupMember,
 } from "../services/groups";
@@ -29,7 +31,11 @@ import {
 import InviteGroupModal from "../components/groups/InviteGroupModal";
 import GroupSettingsModal from "../components/groups/GroupSettingsModal";
 import RegisterMatchModal from "../components/matches/RegisterMatchModal";
-import { getGroupMatches, type Match } from "../services/matches";
+import {
+    deleteMatch,
+    getGroupMatches,
+    type Match,
+} from "../services/matches";
 import MatchCard from "../components/groups/MatchCard";
 
 function Group() {
@@ -138,6 +144,61 @@ function Group() {
             );
         } finally {
             setLoadingMatches(false);
+        }
+    };
+
+    const handleDeleteMatch = async (
+        matchId: string,
+    ) => {
+        try {
+            await deleteMatch(matchId);
+
+            setMatches((current) =>
+                current.filter(
+                    (match) => match.id !== matchId,
+                ),
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao excluir partida:",
+                error,
+            );
+
+            window.alert(
+                "Não foi possível excluir a partida.",
+            );
+        }
+    };
+
+    const handleRemoveMember = async (
+        member: GroupMember,
+    ) => {
+        if (
+            !window.confirm(
+                `Remover ${member.name || "esse jogador"
+                } do grupo? As estatísticas das partidas já registradas serão mantidas.`,
+            )
+        ) {
+            return;
+        }
+
+        try {
+            await removeGroupMember(member.id);
+
+            setMembers((current) =>
+                current.filter(
+                    (existing) => existing.id !== member.id,
+                ),
+            );
+        } catch (error) {
+            console.error(
+                "Erro ao remover jogador:",
+                error,
+            );
+
+            window.alert(
+                "Não foi possível remover o jogador.",
+            );
         }
     };
 
@@ -491,6 +552,23 @@ function Group() {
                                         </span>
                                     </div>
 
+                                    {isAdmin &&
+                                        member.userId !==
+                                        group.ownerId && (
+                                            <button
+                                                type="button"
+                                                className="member-remove"
+                                                title="Remover jogador"
+                                                onClick={() =>
+                                                    handleRemoveMember(
+                                                        member,
+                                                    )
+                                                }
+                                            >
+                                                <UserX size={15} />
+                                            </button>
+                                        )}
+
                                 </div>
 
                             ))}
@@ -578,6 +656,11 @@ function Group() {
                                         setEditingMatch(match);
                                         setRegisterMatchOpen(true);
                                     }}
+                                    onDelete={() => {
+                                        handleDeleteMatch(
+                                            match.id,
+                                        );
+                                    }}
                                 />
                             ))}
                         </div>
@@ -627,15 +710,19 @@ function Group() {
                     setSettingsModalOpen(false)
                 }
                 group={group}
-                onUpdated={(stats) => {
+                onUpdated={({ name, stats }) => {
                     setGroup((current) =>
                         current
                             ? {
                                 ...current,
+                                name,
                                 stats,
                             }
                             : current,
                     );
+                }}
+                onDeleted={() => {
+                    navigate("/groups");
                 }}
             />
             <RegisterMatchModal

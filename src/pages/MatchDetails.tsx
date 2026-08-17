@@ -3,6 +3,7 @@ import {
     CalendarDays,
     Goal,
     Star,
+    Trash2,
     Trophy,
 } from "lucide-react";
 
@@ -16,12 +17,15 @@ import {
     useParams,
 } from "react-router-dom";
 
+import { useAuth } from "../contexts/AuthContext";
+
 import {
     getGroupById,
     type Group as GroupType,
 } from "../services/groups";
 
 import {
+    deleteMatch,
     getMatchById,
     type Match,
     type MatchPlayer,
@@ -30,6 +34,7 @@ import {
 function MatchDetails() {
     const navigate = useNavigate();
     const { groupId, matchId } = useParams();
+    const { user } = useAuth();
 
     const [match, setMatch] =
         useState<Match | null>(null);
@@ -39,6 +44,9 @@ function MatchDetails() {
 
     const [loading, setLoading] =
         useState(true);
+
+    const [deleting, setDeleting] =
+        useState(false);
 
     const [error, setError] =
         useState("");
@@ -257,6 +265,40 @@ function MatchDetails() {
 
     const stats = group?.stats;
 
+    const canDelete =
+        !!user &&
+        (group?.ownerId === user.uid ||
+            match.createdBy === user.uid);
+
+    const handleDelete = async () => {
+        if (
+            !window.confirm(
+                "Excluir esta partida? Essa ação não pode ser desfeita.",
+            )
+        ) {
+            return;
+        }
+
+        try {
+            setDeleting(true);
+
+            await deleteMatch(match.id);
+
+            navigate(`/groups/${groupId}`);
+        } catch (deleteError) {
+            console.error(
+                "Erro ao excluir partida:",
+                deleteError,
+            );
+
+            window.alert(
+                "Não foi possível excluir a partida.",
+            );
+
+            setDeleting(false);
+        }
+    };
+
     return (
         <div className="group-page">
 
@@ -292,6 +334,17 @@ function MatchDetails() {
                         </div>
                     </div>
                 </div>
+
+                {canDelete && (
+                    <button
+                        className="match-delete-button"
+                        title="Excluir partida"
+                        onClick={handleDelete}
+                        disabled={deleting}
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                )}
             </header>
 
             {/* CONTENT */}

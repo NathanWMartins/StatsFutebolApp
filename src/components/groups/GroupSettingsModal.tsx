@@ -1,8 +1,10 @@
-import { Save, X } from "lucide-react";
+import { Save, Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
     defaultGroupStats,
+    deleteGroup,
+    updateGroupName,
     updateGroupStats,
     type Group,
     type GroupStats,
@@ -12,7 +14,11 @@ interface GroupSettingsModalProps {
     open: boolean;
     onClose: () => void;
     group: Group;
-    onUpdated: (stats: GroupStats) => void;
+    onUpdated: (data: {
+        name: string;
+        stats: GroupStats;
+    }) => void;
+    onDeleted: () => void;
 }
 
 function GroupSettingsModal({
@@ -20,7 +26,10 @@ function GroupSettingsModal({
     onClose,
     group,
     onUpdated,
+    onDeleted,
 }: GroupSettingsModalProps) {
+    const [name, setName] = useState(group.name);
+
     const [stats, setStats] =
         useState<GroupStats>(
             group.stats || defaultGroupStats,
@@ -29,11 +38,16 @@ function GroupSettingsModal({
     const [loading, setLoading] =
         useState(false);
 
+    const [deleting, setDeleting] =
+        useState(false);
+
     const [error, setError] =
         useState("");
 
     useEffect(() => {
         if (open) {
+            setName(group.name);
+
             setStats(
                 group.stats || defaultGroupStats,
             );
@@ -56,16 +70,34 @@ function GroupSettingsModal({
     };
 
     const handleSave = async () => {
+        if (!name.trim()) {
+            setError(
+                "Digite um nome para o grupo.",
+            );
+
+            return;
+        }
+
         try {
             setLoading(true);
             setError("");
 
-            await updateGroupStats(
-                group.id,
-                stats,
-            );
+            await Promise.all([
+                updateGroupName(
+                    group.id,
+                    name.trim(),
+                ),
+                updateGroupStats(
+                    group.id,
+                    stats,
+                ),
+            ]);
 
-            onUpdated(stats);
+            onUpdated({
+                name: name.trim(),
+                stats,
+            });
+
             onClose();
         } catch (error) {
             console.error(
@@ -78,6 +110,36 @@ function GroupSettingsModal({
             );
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteGroup = async () => {
+        if (
+            !window.confirm(
+                `Excluir o grupo "${group.name}"? Todas as partidas e estatísticas registradas serão apagadas para sempre. Essa ação não pode ser desfeita.`,
+            )
+        ) {
+            return;
+        }
+
+        try {
+            setDeleting(true);
+            setError("");
+
+            await deleteGroup(group.id);
+
+            onDeleted();
+        } catch (error) {
+            console.error(
+                "Erro ao excluir grupo:",
+                error,
+            );
+
+            setError(
+                "Não foi possível excluir o grupo.",
+            );
+
+            setDeleting(false);
         }
     };
 
@@ -165,10 +227,27 @@ function GroupSettingsModal({
                     </h2>
 
                     <p>
-                        Escolha quais estatísticas
-                        serão utilizadas nas partidas
-                        deste grupo.
+                        Altere o nome do grupo e
+                        escolha quais estatísticas
+                        serão utilizadas nas partidas.
                     </p>
+                </div>
+
+                <div className="form-field">
+                    <label htmlFor="settings-group-name">
+                        Nome do grupo
+                    </label>
+
+                    <input
+                        id="settings-group-name"
+                        type="text"
+                        placeholder="Ex.: Futebol de Quarta"
+                        value={name}
+                        onChange={(event) =>
+                            setName(event.target.value)
+                        }
+                        disabled={loading || deleting}
+                    />
                 </div>
 
                 <div className="settings-options">
@@ -213,7 +292,7 @@ function GroupSettingsModal({
                 <button
                     className="button button-primary settings-save"
                     onClick={handleSave}
-                    disabled={loading}
+                    disabled={loading || deleting}
                 >
                     <Save size={17} />
 
@@ -221,6 +300,33 @@ function GroupSettingsModal({
                         ? "Salvando..."
                         : "Salvar configurações"}
                 </button>
+
+                <div className="settings-danger-zone">
+                    <h4>
+                        Zona de perigo
+                    </h4>
+
+                    <p>
+                        Excluir o grupo remove
+                        permanentemente todas as
+                        partidas, estatísticas e a
+                        lista de jogadores. Não pode
+                        ser desfeito.
+                    </p>
+
+                    <button
+                        type="button"
+                        className="button button-danger"
+                        onClick={handleDeleteGroup}
+                        disabled={loading || deleting}
+                    >
+                        <Trash2 size={16} />
+
+                        {deleting
+                            ? "Excluindo..."
+                            : "Excluir grupo"}
+                    </button>
+                </div>
             </div>
         </div>
     );

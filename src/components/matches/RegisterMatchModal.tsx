@@ -346,52 +346,6 @@ function RegisterMatchModal({
         return true;
     };
 
-    const validateStats = () => {
-        const teamAGoals =
-            teamAPlayers.reduce(
-                (total, player) =>
-                    total +
-                    (playerStats[
-                        player.userId
-                    ]?.goals || 0),
-                0,
-            );
-
-        const teamBGoals =
-            teamBPlayers.reduce(
-                (total, player) =>
-                    total +
-                    (playerStats[
-                        player.userId
-                    ]?.goals || 0),
-                0,
-            );
-
-        if (
-            group.stats?.goals &&
-            teamAGoals !== scoreA
-        ) {
-            setError(
-                `Os gols do Time A totalizam ${teamAGoals}, mas o placar é ${scoreA}.`,
-            );
-
-            return false;
-        }
-
-        if (
-            group.stats?.goals &&
-            teamBGoals !== scoreB
-        ) {
-            setError(
-                `Os gols do Time B totalizam ${teamBGoals}, mas o placar é ${scoreB}.`,
-            );
-
-            return false;
-        }
-
-        return true;
-    };
-
     const handleNext = () => {
         if (!validateStepOne()) {
             return;
@@ -412,10 +366,6 @@ function RegisterMatchModal({
 
         if (!validateStepOne()) {
             setStep(1);
-            return;
-        }
-
-        if (!validateStats()) {
             return;
         }
 

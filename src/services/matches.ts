@@ -1,6 +1,7 @@
 import {
     addDoc,
     collection,
+    deleteDoc,
     doc,
     getDoc,
     getDocs,
@@ -91,6 +92,14 @@ export async function updateMatch(
             photoBase64 || null,
         updatedAt: serverTimestamp(),
     });
+}
+
+export async function deleteMatch(
+    matchId: string,
+): Promise<void> {
+    const matchRef = doc(db, "matches", matchId);
+
+    await deleteDoc(matchRef);
 }
 
 export async function getMatchById(

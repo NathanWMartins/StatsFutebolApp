@@ -3,6 +3,7 @@ import {
     ChevronRight,
     Trophy,
     Pencil,
+    Trash2,
 } from "lucide-react";
 
 import type { Match } from "../../services/matches";
@@ -11,6 +12,7 @@ interface MatchCardProps {
     match: Match;
     onClick?: () => void;
     onEdit?: () => void;
+    onDelete?: () => void;
     canEdit?: boolean;
 }
 
@@ -18,6 +20,7 @@ function MatchCard({
     match,
     onClick,
     onEdit,
+    onDelete,
     canEdit = false,
 }: MatchCardProps) {
     const date = new Date(
@@ -83,17 +86,38 @@ function MatchCard({
                     </span>
 
                     {canEdit && (
-                        <button
-                            type="button"
-                            className="match-card-edit"
-                            title="Editar partida"
-                            onClick={(event) => {
-                                event.stopPropagation();
-                                onEdit?.();
-                            }}
-                        >
-                            <Pencil size={14} />
-                        </button>
+                        <div className="match-card-actions">
+                            <button
+                                type="button"
+                                className="match-card-edit"
+                                title="Editar partida"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    onEdit?.();
+                                }}
+                            >
+                                <Pencil size={14} />
+                            </button>
+
+                            <button
+                                type="button"
+                                className="match-card-delete"
+                                title="Excluir partida"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+
+                                    if (
+                                        window.confirm(
+                                            "Excluir esta partida? Essa ação não pode ser desfeita.",
+                                        )
+                                    ) {
+                                        onDelete?.();
+                                    }
+                                }}
+                            >
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
                     )}
                 </div>
 
