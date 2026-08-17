@@ -30,6 +30,7 @@ function JoinGroup() {
 
     const {
         user,
+        loading: authLoading,
         loginWithGoogle,
     } = useAuth();
 
@@ -47,6 +48,12 @@ function JoinGroup() {
 
     useEffect(() => {
         const loadGroup = async () => {
+            // Primeiro esperamos o Firebase
+            // terminar de verificar a sessão.
+            if (authLoading) {
+                return;
+            }
+
             if (!inviteCode) {
                 setError(
                     "Convite inválido.",
@@ -90,7 +97,7 @@ function JoinGroup() {
         };
 
         loadGroup();
-    }, [inviteCode]);
+    }, [inviteCode, authLoading]);
 
     const handleJoin = async () => {
         if (!group || !user) {
@@ -113,14 +120,14 @@ function JoinGroup() {
             );
         } catch (error) {
             console.error(
-                "ERRO COMPLETO AO CARREGAR CONVITE:",
+                "Erro ao entrar no grupo:",
                 error,
             );
 
             setError(
                 error instanceof Error
                     ? error.message
-                    : "Não foi possível carregar o convite.",
+                    : "Não foi possível entrar no grupo.",
             );
         } finally {
             setJoining(false);
@@ -132,6 +139,10 @@ function JoinGroup() {
             setError("");
 
             await loginWithGoogle();
+
+            // Depois do login, o useEffect será
+            // executado novamente porque authLoading
+            // muda e o usuário será atualizado.
         } catch (error) {
             console.error(
                 "Erro ao fazer login:",
@@ -144,7 +155,7 @@ function JoinGroup() {
         }
     };
 
-    if (loading) {
+    if (authLoading || loading) {
         return (
             <div className="join-page">
                 <div className="join-card">
@@ -157,8 +168,7 @@ function JoinGroup() {
                     </h1>
 
                     <p>
-                        Estamos verificando o
-                        convite.
+                        Estamos verificando o convite.
                     </p>
                 </div>
             </div>
@@ -263,7 +273,6 @@ function JoinGroup() {
                         {error}
                     </div>
                 )}
-
             </div>
         </div>
     );
