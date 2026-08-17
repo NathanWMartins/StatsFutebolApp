@@ -28,6 +28,8 @@ function Groups() {
 
     const [createGroupOpen, setCreateGroupOpen] = useState(false);
 
+    const [loggingOut, setLoggingOut] = useState(false);
+
     const [groups, setGroups] = useState<Group[]>([]);
     const [loadingGroups, setLoadingGroups] = useState(true);
 
@@ -100,7 +102,23 @@ function Groups() {
                     <button
                         className="logout-button"
                         title="Sair"
-                        onClick={logout}
+                        disabled={loggingOut}
+                        onClick={async () => {
+                            try {
+                                setLoggingOut(true);
+
+                                await logout();
+
+                                navigate("/");
+                            } catch (error) {
+                                console.error(
+                                    "Erro ao sair:",
+                                    error,
+                                );
+
+                                setLoggingOut(false);
+                            }
+                        }}
                     >
                         <LogOut size={17} />
                     </button>

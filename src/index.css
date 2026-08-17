@@ -3108,3 +3108,8 @@ button {
         gap: 8px;
     }
 }
+
+.logout-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
