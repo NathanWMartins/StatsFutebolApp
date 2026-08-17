@@ -6,10 +6,14 @@ import {
     type ReactNode,
 } from "react";
 
+import { FirebaseError } from "firebase/app";
+
 import {
     GoogleAuthProvider,
+    getRedirectResult,
     onAuthStateChanged,
     signInWithPopup,
+    signInWithRedirect,
     signOut,
     type User,
 } from "firebase/auth";
@@ -51,6 +55,16 @@ export function AuthProvider({
         useState(true);
 
     useEffect(() => {
+        // Conclui o login por redirecionamento (se o usuário
+        // acabou de voltar do Google) e captura eventuais erros
+        // que não aparecem via onAuthStateChanged.
+        getRedirectResult(auth).catch((error) => {
+            console.error(
+                "Erro ao concluir login com Google:",
+                error,
+            );
+        });
+
         const unsubscribe =
             onAuthStateChanged(
                 auth,
@@ -104,10 +118,33 @@ export function AuthProvider({
             const provider =
                 new GoogleAuthProvider();
 
-            await signInWithPopup(
-                auth,
-                provider,
-            );
+            try {
+                await signInWithPopup(
+                    auth,
+                    provider,
+                );
+            } catch (error) {
+                // Se o popup não puder ser usado (bloqueado pelo
+                // navegador ou ambiente sem suporte, como
+                // navegadores embutidos de apps), caímos para o
+                // fluxo por redirecionamento.
+                if (
+                    error instanceof FirebaseError &&
+                    (error.code ===
+                        "auth/popup-blocked" ||
+                        error.code ===
+                        "auth/operation-not-supported-in-this-environment")
+                ) {
+                    await signInWithRedirect(
+                        auth,
+                        provider,
+                    );
+
+                    return;
+                }
+
+                throw error;
+            }
         };
 
     const logout =

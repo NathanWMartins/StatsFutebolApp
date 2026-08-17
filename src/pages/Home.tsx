@@ -5,12 +5,25 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import LoginModal from "../components/auth/LoginModal";
+import { useAuth } from "../contexts/AuthContext";
 
 function Home() {
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
   const [loginOpen, setLoginOpen] = useState(false);
+
+  useEffect(() => {
+    // Cobre tanto quem já está logado e cai aqui quanto quem
+    // acabou de voltar do redirecionamento de login do Google.
+    if (!loading && user) {
+      navigate("/groups");
+    }
+  }, [loading, user, navigate]);
 
   return (
     <main className="home">

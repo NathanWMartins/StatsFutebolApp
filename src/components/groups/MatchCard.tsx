@@ -2,6 +2,7 @@ import {
     CalendarDays,
     ChevronRight,
     Trophy,
+    Pencil,
 } from "lucide-react";
 
 import type { Match } from "../../services/matches";
@@ -9,11 +10,15 @@ import type { Match } from "../../services/matches";
 interface MatchCardProps {
     match: Match;
     onClick?: () => void;
+    onEdit?: () => void;
+    canEdit?: boolean;
 }
 
 function MatchCard({
     match,
     onClick,
+    onEdit,
+    canEdit = false,
 }: MatchCardProps) {
     const date = new Date(
         `${match.date}T00:00:00`,
@@ -76,6 +81,20 @@ function MatchCard({
                     <span>
                         {formattedDate}
                     </span>
+
+                    {canEdit && (
+                        <button
+                            type="button"
+                            className="match-card-edit"
+                            title="Editar partida"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                onEdit?.();
+                            }}
+                        >
+                            <Pencil size={14} />
+                        </button>
+                    )}
                 </div>
 
                 <div className="match-card-score">
@@ -123,6 +142,7 @@ function MatchCard({
                         }}
                     >
                         Ver partida
+
                         <ChevronRight
                             size={15}
                         />

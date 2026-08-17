@@ -10,12 +10,17 @@ import {
     X,
 } from "lucide-react";
 
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useState,
+} from "react";
 
 import { useAuth } from "../../contexts/AuthContext";
 
 import {
     createMatch,
+    updateMatch,
+    type Match,
     type MatchPlayer,
 } from "../../services/matches";
 
@@ -23,6 +28,7 @@ import type {
     Group,
     GroupMember,
 } from "../../services/groups";
+
 import { compressImage } from "../../utils/compressImage";
 
 interface RegisterMatchModalProps {
@@ -32,6 +38,7 @@ interface RegisterMatchModalProps {
     group: Group;
     members: GroupMember[];
     onCreated: () => void;
+    editingMatch?: Match | null;
 }
 
 interface PlayerStats {
@@ -88,8 +95,11 @@ function RegisterMatchModal({
     group,
     members,
     onCreated,
+    editingMatch = null,
 }: RegisterMatchModalProps) {
     const { user } = useAuth();
+
+    const isEditing = !!editingMatch;
 
     const [step, setStep] =
         useState<1 | 2>(1);
@@ -127,20 +137,81 @@ function RegisterMatchModal({
             return;
         }
 
+        setError("");
+        setStep(1);
+
+        /*
+         * MODO EDIÇÃO
+         */
+        if (editingMatch) {
+            setDate(editingMatch.date);
+
+            setScoreA(editingMatch.scoreA);
+            setScoreB(editingMatch.scoreB);
+
+            setPhotoPreview(
+                editingMatch.photoBase64 ||
+                null,
+            );
+
+            const players: Record<
+                string,
+                "A" | "B"
+            > = {};
+
+            const stats: Record<
+                string,
+                PlayerStats
+            > = {};
+
+            editingMatch.players.forEach(
+                (player) => {
+                    players[player.userId] =
+                        player.team;
+
+                    stats[player.userId] = {
+                        goals:
+                            player.goals || 0,
+
+                        assists:
+                            player.assists || 0,
+
+                        yellowCards:
+                            player.yellowCards ||
+                            0,
+
+                        redCards:
+                            player.redCards ||
+                            0,
+
+                        mvp:
+                            player.mvp || false,
+                    };
+                },
+            );
+
+            setSelectedPlayers(players);
+            setPlayerStats(stats);
+
+            return;
+        }
+
+        /*
+         * MODO CRIAÇÃO
+         */
+
         const today =
             new Date()
                 .toISOString()
                 .split("T")[0];
 
-        setStep(1);
         setDate(today);
         setScoreA(0);
         setScoreB(0);
         setSelectedPlayers({});
         setPlayerStats({});
         setPhotoPreview(null);
-        setError("");
-    }, [open]);
+    }, [open, editingMatch]);
 
     if (!open) {
         return null;
@@ -192,7 +263,7 @@ function RegisterMatchModal({
         members.filter(
             (member) =>
                 selectedPlayers[
-                member.userId
+                    member.userId
                 ] === "A",
         );
 
@@ -200,7 +271,7 @@ function RegisterMatchModal({
         members.filter(
             (member) =>
                 selectedPlayers[
-                member.userId
+                    member.userId
                 ] === "B",
         );
 
@@ -218,7 +289,11 @@ function RegisterMatchModal({
 
             [userId]: {
                 ...current[userId],
-                [stat]: Math.max(0, value),
+
+                [stat]: Math.max(
+                    0,
+                    value,
+                ),
             },
         }));
     };
@@ -326,7 +401,7 @@ function RegisterMatchModal({
         setStep(2);
     };
 
-    const handleCreate = async () => {
+    const handleSave = async () => {
         if (!user) {
             setError(
                 "Usuário não autenticado.",
@@ -337,7 +412,6 @@ function RegisterMatchModal({
 
         if (!validateStepOne()) {
             setStep(1);
-
             return;
         }
 
@@ -354,13 +428,13 @@ function RegisterMatchModal({
                     .filter(
                         (member) =>
                             selectedPlayers[
-                            member.userId
+                                member.userId
                             ],
                     )
                     .map((member) => {
                         const stats =
                             playerStats[
-                            member.userId
+                                member.userId
                             ];
 
                         return {
@@ -377,7 +451,7 @@ function RegisterMatchModal({
 
                             team:
                                 selectedPlayers[
-                                member.userId
+                                    member.userId
                                 ]!,
 
                             goals:
@@ -403,26 +477,41 @@ function RegisterMatchModal({
                         };
                     });
 
-            await createMatch(
-                groupId,
-                user.uid,
-                date,
-                scoreA,
-                scoreB,
-                players,
-                photoPreview,
-            );
+            if (editingMatch) {
+                await updateMatch(
+                    editingMatch.id,
+                    date,
+                    scoreA,
+                    scoreB,
+                    players,
+                    photoPreview,
+                );
+            } else {
+                await createMatch(
+                    groupId,
+                    user.uid,
+                    date,
+                    scoreA,
+                    scoreB,
+                    players,
+                    photoPreview,
+                );
+            }
 
             onCreated();
             onClose();
         } catch (error) {
             console.error(
-                "Erro ao registrar partida:",
+                isEditing
+                    ? "Erro ao atualizar partida:"
+                    : "Erro ao registrar partida:",
                 error,
             );
 
             setError(
-                "Não foi possível registrar a partida.",
+                isEditing
+                    ? "Não foi possível atualizar a partida."
+                    : "Não foi possível registrar a partida.",
             );
         } finally {
             setLoading(false);
@@ -447,7 +536,10 @@ function RegisterMatchModal({
             return;
         }
 
-        if (file.size > 10 * 1024 * 1024) {
+        if (
+            file.size >
+            10 * 1024 * 1024
+        ) {
             setError(
                 "A imagem original deve ter no máximo 10 MB.",
             );
@@ -461,7 +553,9 @@ function RegisterMatchModal({
             const compressedImage =
                 await compressImage(file);
 
-            setPhotoPreview(compressedImage);
+            setPhotoPreview(
+                compressedImage,
+            );
         } catch (error) {
             console.error(
                 "Erro ao processar imagem:",
@@ -472,6 +566,12 @@ function RegisterMatchModal({
                 "Não foi possível processar a imagem.",
             );
         }
+
+        /*
+         * Permite selecionar novamente
+         * a mesma imagem.
+         */
+        event.target.value = "";
     };
 
     return (
@@ -507,12 +607,15 @@ function RegisterMatchModal({
                                 </span>
 
                                 <h2>
-                                    Registrar partida
+                                    {isEditing
+                                        ? "Editar partida"
+                                        : "Registrar partida"}
                                 </h2>
 
                                 <p>
-                                    Registre o resultado
-                                    e quem participou.
+                                    {isEditing
+                                        ? "Atualize o resultado e os participantes."
+                                        : "Registre o resultado e quem participou."}
                                 </p>
                             </div>
                         </div>
@@ -540,9 +643,7 @@ function RegisterMatchModal({
                                                 .value,
                                         )
                                     }
-                                    disabled={
-                                        loading
-                                    }
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
@@ -566,9 +667,12 @@ function RegisterMatchModal({
                                                     Math.max(
                                                         0,
                                                         scoreA -
-                                                        1,
+                                                            1,
                                                     ),
                                                 )
+                                            }
+                                            disabled={
+                                                loading
                                             }
                                         >
                                             <Minus
@@ -589,8 +693,11 @@ function RegisterMatchModal({
                                             onClick={() =>
                                                 setScoreA(
                                                     scoreA +
-                                                    1,
+                                                        1,
                                                 )
+                                            }
+                                            disabled={
+                                                loading
                                             }
                                         >
                                             <Plus
@@ -619,9 +726,12 @@ function RegisterMatchModal({
                                                     Math.max(
                                                         0,
                                                         scoreB -
-                                                        1,
+                                                            1,
                                                     ),
                                                 )
+                                            }
+                                            disabled={
+                                                loading
                                             }
                                         >
                                             <Minus
@@ -642,8 +752,11 @@ function RegisterMatchModal({
                                             onClick={() =>
                                                 setScoreB(
                                                     scoreB +
-                                                    1,
+                                                        1,
                                                 )
+                                            }
+                                            disabled={
+                                                loading
                                             }
                                         >
                                             <Plus
@@ -665,26 +778,40 @@ function RegisterMatchModal({
                             {photoPreview ? (
                                 <div className="match-photo-preview">
                                     <img
-                                        src={photoPreview}
+                                        src={
+                                            photoPreview
+                                        }
                                         alt="Prévia da partida"
                                     />
 
                                     <button
                                         type="button"
                                         className="remove-photo-button"
-                                        onClick={() => {
-                                            setPhotoPreview(null);
-                                        }}
-                                        disabled={loading}
+                                        onClick={() =>
+                                            setPhotoPreview(
+                                                null,
+                                            )
+                                        }
+                                        disabled={
+                                            loading
+                                        }
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2
+                                            size={
+                                                16
+                                            }
+                                        />
                                         Remover foto
                                     </button>
                                 </div>
                             ) : (
                                 <div className="match-photo-actions">
                                     <label className="photo-option">
-                                        <ImagePlus size={20} />
+                                        <ImagePlus
+                                            size={
+                                                20
+                                            }
+                                        />
 
                                         <span>
                                             Escolher da galeria
@@ -701,7 +828,11 @@ function RegisterMatchModal({
                                     </label>
 
                                     <label className="photo-option">
-                                        <Camera size={20} />
+                                        <Camera
+                                            size={
+                                                20
+                                            }
+                                        />
 
                                         <span>
                                             Tirar foto
@@ -738,7 +869,7 @@ function RegisterMatchModal({
 
                             <div className="match-players-list">
                                 {members.length ===
-                                    0 ? (
+                                0 ? (
                                     <div className="empty-groups">
                                         <p>
                                             Nenhum
@@ -753,8 +884,8 @@ function RegisterMatchModal({
                                         ) => {
                                             const team =
                                                 selectedPlayers[
-                                                member
-                                                    .userId
+                                                    member
+                                                        .userId
                                                 ];
 
                                             return (
@@ -762,10 +893,11 @@ function RegisterMatchModal({
                                                     key={
                                                         member.userId
                                                     }
-                                                    className={`match-player ${team
-                                                        ? "selected"
-                                                        : ""
-                                                        }`}
+                                                    className={`match-player ${
+                                                        team
+                                                            ? "selected"
+                                                            : ""
+                                                    }`}
                                                 >
                                                     <div className="match-player-info">
                                                         <div className="member-avatar">
@@ -802,7 +934,7 @@ function RegisterMatchModal({
                                                             type="button"
                                                             className={
                                                                 team ===
-                                                                    "A"
+                                                                "A"
                                                                     ? "active"
                                                                     : ""
                                                             }
@@ -812,6 +944,9 @@ function RegisterMatchModal({
                                                                     "A",
                                                                 )
                                                             }
+                                                            disabled={
+                                                                loading
+                                                            }
                                                         >
                                                             A
                                                         </button>
@@ -820,7 +955,7 @@ function RegisterMatchModal({
                                                             type="button"
                                                             className={
                                                                 team ===
-                                                                    "B"
+                                                                "B"
                                                                     ? "active"
                                                                     : ""
                                                             }
@@ -829,6 +964,9 @@ function RegisterMatchModal({
                                                                     member.userId,
                                                                     "B",
                                                                 )
+                                                            }
+                                                            disabled={
+                                                                loading
                                                             }
                                                         >
                                                             B
@@ -905,8 +1043,8 @@ function RegisterMatchModal({
                                         member,
                                     ) =>
                                         selectedPlayers[
-                                        member
-                                            .userId
+                                            member
+                                                .userId
                                         ],
                                 )
                                 .map(
@@ -915,14 +1053,14 @@ function RegisterMatchModal({
                                     ) => {
                                         const stats =
                                             playerStats[
-                                            member
-                                                .userId
+                                                member
+                                                    .userId
                                             ];
 
                                         const team =
                                             selectedPlayers[
-                                            member
-                                                .userId
+                                                member
+                                                    .userId
                                             ];
 
                                         return (
@@ -976,150 +1114,174 @@ function RegisterMatchModal({
                                                 {group
                                                     .stats
                                                     ?.goals && (
-                                                        <StatControl
-                                                            label="Gols"
-                                                            value={
-                                                                stats?.goals ||
-                                                                0
-                                                            }
-                                                            onDecrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "goals",
-                                                                    (stats?.goals ||
-                                                                        0) -
+                                                    <StatControl
+                                                        label="Gols"
+                                                        value={
+                                                            stats?.goals ||
+                                                            0
+                                                        }
+                                                        onDecrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "goals",
+                                                                (
+                                                                    stats?.goals ||
+                                                                    0
+                                                                ) -
                                                                     1,
-                                                                )
-                                                            }
-                                                            onIncrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "goals",
-                                                                    (stats?.goals ||
-                                                                        0) +
+                                                            )
+                                                        }
+                                                        onIncrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "goals",
+                                                                (
+                                                                    stats?.goals ||
+                                                                    0
+                                                                ) +
                                                                     1,
-                                                                )
-                                                            }
-                                                        />
-                                                    )}
+                                                            )
+                                                        }
+                                                    />
+                                                )}
 
                                                 {group
                                                     .stats
                                                     ?.assists && (
-                                                        <StatControl
-                                                            label="Assistências"
-                                                            value={
-                                                                stats?.assists ||
-                                                                0
-                                                            }
-                                                            onDecrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "assists",
-                                                                    (stats?.assists ||
-                                                                        0) -
+                                                    <StatControl
+                                                        label="Assistências"
+                                                        value={
+                                                            stats?.assists ||
+                                                            0
+                                                        }
+                                                        onDecrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "assists",
+                                                                (
+                                                                    stats?.assists ||
+                                                                    0
+                                                                ) -
                                                                     1,
-                                                                )
-                                                            }
-                                                            onIncrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "assists",
-                                                                    (stats?.assists ||
-                                                                        0) +
+                                                            )
+                                                        }
+                                                        onIncrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "assists",
+                                                                (
+                                                                    stats?.assists ||
+                                                                    0
+                                                                ) +
                                                                     1,
-                                                                )
-                                                            }
-                                                        />
-                                                    )}
+                                                            )
+                                                        }
+                                                    />
+                                                )}
 
                                                 {group
                                                     .stats
                                                     ?.yellowCards && (
-                                                        <StatControl
-                                                            label="Cartões amarelos"
-                                                            value={
-                                                                stats?.yellowCards ||
-                                                                0
-                                                            }
-                                                            onDecrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "yellowCards",
-                                                                    (stats?.yellowCards ||
-                                                                        0) -
+                                                    <StatControl
+                                                        label="Cartões amarelos"
+                                                        value={
+                                                            stats?.yellowCards ||
+                                                            0
+                                                        }
+                                                        onDecrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "yellowCards",
+                                                                (
+                                                                    stats?.yellowCards ||
+                                                                    0
+                                                                ) -
                                                                     1,
-                                                                )
-                                                            }
-                                                            onIncrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "yellowCards",
-                                                                    (stats?.yellowCards ||
-                                                                        0) +
+                                                            )
+                                                        }
+                                                        onIncrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "yellowCards",
+                                                                (
+                                                                    stats?.yellowCards ||
+                                                                    0
+                                                                ) +
                                                                     1,
-                                                                )
-                                                            }
-                                                        />
-                                                    )}
+                                                            )
+                                                        }
+                                                    />
+                                                )}
 
                                                 {group
                                                     .stats
                                                     ?.redCards && (
-                                                        <StatControl
-                                                            label="Cartões vermelhos"
-                                                            value={
-                                                                stats?.redCards ||
-                                                                0
-                                                            }
-                                                            onDecrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "redCards",
-                                                                    (stats?.redCards ||
-                                                                        0) -
+                                                    <StatControl
+                                                        label="Cartões vermelhos"
+                                                        value={
+                                                            stats?.redCards ||
+                                                            0
+                                                        }
+                                                        onDecrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "redCards",
+                                                                (
+                                                                    stats?.redCards ||
+                                                                    0
+                                                                ) -
                                                                     1,
-                                                                )
-                                                            }
-                                                            onIncrease={() =>
-                                                                updatePlayerStat(
-                                                                    member.userId,
-                                                                    "redCards",
-                                                                    (stats?.redCards ||
-                                                                        0) +
+                                                            )
+                                                        }
+                                                        onIncrease={() =>
+                                                            updatePlayerStat(
+                                                                member.userId,
+                                                                "redCards",
+                                                                (
+                                                                    stats?.redCards ||
+                                                                    0
+                                                                ) +
                                                                     1,
-                                                                )
-                                                            }
-                                                        />
-                                                    )}
+                                                            )
+                                                        }
+                                                    />
+                                                )}
 
                                                 {group
                                                     .stats
                                                     ?.mvp && (
-                                                        <button
-                                                            type="button"
-                                                            className={`mvp-button ${stats?.mvp
+                                                    <button
+                                                        type="button"
+                                                        className={`mvp-button ${
+                                                            stats?.mvp
                                                                 ? "active"
                                                                 : ""
-                                                                }`}
-                                                            onClick={() =>
-                                                                toggleMvp(
-                                                                    member.userId,
-                                                                )
+                                                        }`}
+                                                        onClick={() =>
+                                                            toggleMvp(
+                                                                member.userId,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            loading
+                                                        }
+                                                    >
+                                                        <Star
+                                                            size={
+                                                                14
                                                             }
-                                                        >
-                                                            <Star
-                                                                size={14}
-                                                                style={{
-                                                                    verticalAlign: "-2px",
-                                                                    marginRight: 4,
-                                                                }}
-                                                            />
-                                                            {stats?.mvp
-                                                                ? "MVP selecionado"
-                                                                : "Marcar como MVP"}
-                                                        </button>
-                                                    )}
+                                                            style={{
+                                                                verticalAlign:
+                                                                    "-2px",
+                                                                marginRight: 4,
+                                                            }}
+                                                        />
+
+                                                        {stats?.mvp
+                                                            ? "MVP selecionado"
+                                                            : "Marcar como MVP"}
+                                                    </button>
+                                                )}
                                             </div>
                                         );
                                     },
@@ -1137,14 +1299,10 @@ function RegisterMatchModal({
                                 type="button"
                                 className="button button-secondary"
                                 onClick={() => {
-                                    setError(
-                                        "",
-                                    );
+                                    setError("");
                                     setStep(1);
                                 }}
-                                disabled={
-                                    loading
-                                }
+                                disabled={loading}
                             >
                                 Voltar
                             </button>
@@ -1153,15 +1311,17 @@ function RegisterMatchModal({
                                 type="button"
                                 className="button button-primary"
                                 onClick={
-                                    handleCreate
+                                    handleSave
                                 }
-                                disabled={
-                                    loading
-                                }
+                                disabled={loading}
                             >
                                 {loading
-                                    ? "Registrando..."
-                                    : "Registrar partida"}
+                                    ? isEditing
+                                        ? "Salvando..."
+                                        : "Registrando..."
+                                    : isEditing
+                                      ? "Salvar alterações"
+                                      : "Registrar partida"}
                             </button>
                         </div>
                     </>

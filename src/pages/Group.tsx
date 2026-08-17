@@ -64,6 +64,9 @@ function Group() {
     const [registerMatchOpen, setRegisterMatchOpen] =
         useState(false);
 
+    const [editingMatch, setEditingMatch] =
+        useState<Match | null>(null);
+
     useEffect(() => {
         const loadGroup = async () => {
             if (!groupId) {
@@ -343,9 +346,10 @@ function Group() {
                     {isAdmin && (
                         <button
                             className="button button-primary"
-                            onClick={() =>
-                                setRegisterMatchOpen(true)
-                            }
+                            onClick={() => {
+                                setEditingMatch(null);
+                                setRegisterMatchOpen(true);
+                            }}
                         >
                             <Plus size={17} />
                             Registrar partida
@@ -550,9 +554,10 @@ function Group() {
 
                             <button
                                 className="button button-primary"
-                                onClick={() =>
-                                    setRegisterMatchOpen(true)
-                                }
+                                onClick={() => {
+                                    setEditingMatch(null);
+                                    setRegisterMatchOpen(true);
+                                }}
                             >
                                 Registrar primeira partida
                             </button>
@@ -563,10 +568,15 @@ function Group() {
                                 <MatchCard
                                     key={match.id}
                                     match={match}
+                                    canEdit={isAdmin}
                                     onClick={() => {
                                         navigate(
                                             `/groups/${group.id}/matches/${match.id}`,
                                         );
+                                    }}
+                                    onEdit={() => {
+                                        setEditingMatch(match);
+                                        setRegisterMatchOpen(true);
                                     }}
                                 />
                             ))}
@@ -630,14 +640,18 @@ function Group() {
             />
             <RegisterMatchModal
                 open={registerMatchOpen}
-                onClose={() =>
-                    setRegisterMatchOpen(false)
-                }
+                onClose={() => {
+                    setRegisterMatchOpen(false);
+                    setEditingMatch(null);
+                }}
                 groupId={group.id}
                 group={group}
                 members={members}
+                editingMatch={editingMatch}
                 onCreated={() => {
                     refreshMatches();
+                    setRegisterMatchOpen(false);
+                    setEditingMatch(null);
                 }}
             />
             <InviteGroupModal

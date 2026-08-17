@@ -16,6 +16,11 @@ function LoginModal({ open, onClose }: LoginModalProps) {
 
     const handleGoogleLogin = async () => {
         try {
+            // Na maioria dos casos o login é feito por popup e
+            // retorna aqui mesmo. Se o navegador não suportar o
+            // popup, caímos para redirecionamento (a página sai e
+            // volta, então o código abaixo simplesmente não roda
+            // nesse caso).
             await loginWithGoogle();
 
             onClose();

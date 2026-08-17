@@ -6,6 +6,7 @@ import {
     getDocs,
     query,
     serverTimestamp,
+    updateDoc,
     where,
 } from "firebase/firestore";
 
@@ -37,6 +38,7 @@ export interface Match {
     players: MatchPlayer[];
     createdBy: string;
     createdAt?: unknown;
+    updatedAt?: unknown;
 }
 
 export async function createMatch(
@@ -64,6 +66,31 @@ export async function createMatch(
     );
 
     return matchRef.id;
+}
+
+export async function updateMatch(
+    matchId: string,
+    date: string,
+    scoreA: number,
+    scoreB: number,
+    players: MatchPlayer[],
+    photoBase64?: string | null,
+): Promise<void> {
+    const matchRef = doc(
+        db,
+        "matches",
+        matchId,
+    );
+
+    await updateDoc(matchRef, {
+        date,
+        scoreA,
+        scoreB,
+        players,
+        photoBase64:
+            photoBase64 || null,
+        updatedAt: serverTimestamp(),
+    });
 }
 
 export async function getMatchById(

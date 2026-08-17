@@ -48,19 +48,20 @@ function JoinGroup() {
 
     useEffect(() => {
         const loadGroup = async () => {
-            // Primeiro esperamos o Firebase
-            // terminar de verificar a sessão.
             if (authLoading) {
                 return;
             }
 
-            if (!inviteCode) {
-                setError(
-                    "Convite inválido.",
-                );
-
+            // Usuário ainda não está autenticado.
+            // Não tentamos acessar o Firestore.
+            if (!user) {
                 setLoading(false);
+                return;
+            }
 
+            if (!inviteCode) {
+                setError("Convite inválido.");
+                setLoading(false);
                 return;
             }
 
@@ -97,7 +98,28 @@ function JoinGroup() {
         };
 
         loadGroup();
-    }, [inviteCode, authLoading]);
+    }, [inviteCode, user, authLoading]);
+
+    const handleLogin = async () => {
+        try {
+            setError("");
+
+            await loginWithGoogle();
+
+            // Não precisamos navegar.
+            // Depois do login, o AuthContext atualiza
+            // "user" e o useEffect acima será executado novamente.
+        } catch (error) {
+            console.error(
+                "Erro ao fazer login:",
+                error,
+            );
+
+            setError(
+                "Não foi possível fazer login com o Google.",
+            );
+        }
+    };
 
     const handleJoin = async () => {
         if (!group || !user) {
@@ -115,9 +137,7 @@ function JoinGroup() {
                 user.photoURL,
             );
 
-            navigate(
-                `/groups/${group.id}`,
-            );
+            navigate(`/groups/${group.id}`);
         } catch (error) {
             console.error(
                 "Erro ao entrar no grupo:",
@@ -134,28 +154,79 @@ function JoinGroup() {
         }
     };
 
-    const handleLogin = async () => {
-        try {
-            setError("");
+    if (authLoading) {
+        return (
+            <div className="join-page">
+                <div className="join-card">
+                    <div className="join-icon">
+                        <Goal size={28} />
+                    </div>
 
-            await loginWithGoogle();
+                    <h1>
+                        Verificando acesso...
+                    </h1>
 
-            // Depois do login, o useEffect será
-            // executado novamente porque authLoading
-            // muda e o usuário será atualizado.
-        } catch (error) {
-            console.error(
-                "Erro ao fazer login:",
-                error,
-            );
+                    <p>
+                        Aguarde enquanto verificamos
+                        sua conta.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
-            setError(
-                "Não foi possível fazer login com o Google.",
-            );
-        }
-    };
+    // Usuário não autenticado
+    if (!user) {
+        return (
+            <div className="join-page">
+                <div className="join-card">
+                    <div className="join-icon">
+                        <LogIn size={28} />
+                    </div>
 
-    if (authLoading || loading) {
+                    <span className="eyebrow">
+                        CONVITE PARA GRUPO
+                    </span>
+
+                    <h1>
+                        Entre para continuar
+                    </h1>
+
+                    <p>
+                        Faça login com sua conta Google
+                        para acessar o convite e entrar
+                        no grupo.
+                    </p>
+
+                    <button
+                        className="button button-primary join-button"
+                        onClick={handleLogin}
+                    >
+                        <LogIn size={18} />
+
+                        Entrar com Google
+                    </button>
+
+                    {error && (
+                        <div className="form-error">
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        className="join-back-button"
+                        onClick={() =>
+                            navigate("/")
+                        }
+                    >
+                        Voltar para o início
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (loading) {
         return (
             <div className="join-page">
                 <div className="join-card">
@@ -211,7 +282,6 @@ function JoinGroup() {
     return (
         <div className="join-page">
             <div className="join-card">
-
                 <div className="join-icon">
                     <Goal size={28} />
                 </div>
@@ -239,34 +309,21 @@ function JoinGroup() {
                     </span>
                 </div>
 
-                {user ? (
-                    <button
-                        className="button button-primary join-button"
-                        onClick={handleJoin}
-                        disabled={joining}
-                    >
-                        {joining ? (
-                            "Entrando..."
-                        ) : (
-                            <>
-                                <Check
-                                    size={18}
-                                />
+                <button
+                    className="button button-primary join-button"
+                    onClick={handleJoin}
+                    disabled={joining}
+                >
+                    {joining ? (
+                        "Entrando..."
+                    ) : (
+                        <>
+                            <Check size={18} />
 
-                                Entrar no grupo
-                            </>
-                        )}
-                    </button>
-                ) : (
-                    <button
-                        className="button button-primary join-button"
-                        onClick={handleLogin}
-                    >
-                        <LogIn size={18} />
-
-                        Entrar com Google
-                    </button>
-                )}
+                            Entrar no grupo
+                        </>
+                    )}
+                </button>
 
                 {error && (
                     <div className="form-error">
