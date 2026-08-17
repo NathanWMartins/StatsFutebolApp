@@ -4,7 +4,6 @@ import {
   Goal,
   Trophy,
   Users,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -27,12 +26,6 @@ function Home() {
             />
 
             <span>Sua Pelada</span>
-          </div>
-
-          <div className="hero-badge">
-            <span className="badge-dot" />
-
-            Feito para quem não perde uma pelada
           </div>
 
           <h1>
@@ -62,12 +55,6 @@ function Home() {
             >
               Já tenho um grupo
             </button>
-          </div>
-
-          <div className="hero-note">
-            <Zap size={15} />
-
-            Grátis para começar
           </div>
         </div>
 
