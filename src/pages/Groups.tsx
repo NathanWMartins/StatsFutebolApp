@@ -60,11 +60,14 @@ function Groups() {
         <div className="dashboard">
             <header className="dashboard-header">
                 <div className="dashboard-brand">
-                    <span className="dashboard-logo">
-                        <Goal size={18} />
-                    </span>
+                    <img
+                        src="/LogoSuaPelada.png"
+                        alt=""
+                        className="dashboard-logo"
+                    />
 
-                    <span>Pelada</span>
+                    <span className="dashboard-logo-name2">Sua </span>
+                    <span className="dashboard-logo-name1">Pelada</span>
                 </div>
 
                 <div className="dashboard-user">

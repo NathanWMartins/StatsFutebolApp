@@ -1,4 +1,4 @@
-import { Goal, X } from "lucide-react";
+import { X } from "lucide-react";
 import { loginWithGoogle } from "../../services/auth";
 import { useNavigate } from "react-router-dom";
 
@@ -40,11 +40,14 @@ function LoginModal({ open, onClose }: LoginModalProps) {
                     <X size={20} />
                 </button>
 
-                <div className="login-logo">
-                    <Goal size={26} />
-                </div>
+                <div className="login-brand">
+                    <img
+                        src="/LogoSuaPelada.png"
+                        alt="Sua Pelada"
+                    />
 
-                <h2>Entre no Pelada</h2>
+                    <span>Sua Pelada</span>
+                </div>
 
                 <p>
                     Entre para criar seu grupo e começar a registrar
