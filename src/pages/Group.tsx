@@ -41,7 +41,7 @@ import MatchCard from "../components/groups/MatchCard";
 function Group() {
     const navigate = useNavigate();
     const { groupId } = useParams();
-    const { user } = useAuth();
+    const { user, isMaxAdmin } = useAuth();
 
     const [matches, setMatches] =
         useState<Match[]>([]);
@@ -324,8 +324,13 @@ function Group() {
         );
     }
 
+    const currentMember = members.find(
+        (member) => member.userId === user?.uid,
+    );
+
     const isAdmin =
-        group.ownerId === user?.uid;
+        isMaxAdmin ||
+        currentMember?.role === "admin";
 
     return (
         <div className="group-page">
@@ -629,16 +634,17 @@ function Group() {
                                 para começar a construir o
                                 histórico do grupo.
                             </p>
-
-                            <button
-                                className="button button-primary"
-                                onClick={() => {
-                                    setEditingMatch(null);
-                                    setRegisterMatchOpen(true);
-                                }}
-                            >
-                                Registrar primeira partida
-                            </button>
+                            {(isAdmin) && (
+                                <button
+                                    className="button button-primary"
+                                    onClick={() => {
+                                        setEditingMatch(null);
+                                        setRegisterMatchOpen(true);
+                                    }}
+                                >
+                                    Registrar primeira partida
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="matches-grid">
@@ -646,7 +652,7 @@ function Group() {
                                 <MatchCard
                                     key={match.id}
                                     match={match}
-                                    canEdit={isAdmin}
+                                    canEditOrCreate={isAdmin}
                                     onClick={() => {
                                         navigate(
                                             `/groups/${group.id}/matches/${match.id}`,

@@ -7,13 +7,14 @@ import {
 } from "lucide-react";
 
 import type { Match } from "../../services/matches";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface MatchCardProps {
     match: Match;
     onClick?: () => void;
     onEdit?: () => void;
     onDelete?: () => void;
-    canEdit?: boolean;
+    canEditOrCreate?: boolean;
 }
 
 function MatchCard({
@@ -21,11 +22,13 @@ function MatchCard({
     onClick,
     onEdit,
     onDelete,
-    canEdit = false,
+    canEditOrCreate: canEditOrCreate = false,
 }: MatchCardProps) {
     const date = new Date(
         `${match.date}T00:00:00`,
     );
+
+    const { isMaxAdmin } = useAuth();
 
     const formattedDate =
         date.toLocaleDateString(
@@ -85,7 +88,7 @@ function MatchCard({
                         {formattedDate}
                     </span>
 
-                    {canEdit && (
+                    {(canEditOrCreate || isMaxAdmin) && (
                         <div className="match-card-actions">
                             <button
                                 type="button"

@@ -30,6 +30,7 @@ import { auth, db } from "../config/firebase";
 interface AuthContextData {
     user: User | null;
     loading: boolean;
+    isMaxAdmin: boolean;
     loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -37,8 +38,9 @@ interface AuthContextData {
 const AuthContext = createContext<AuthContextData>({
     user: null,
     loading: true,
-    loginWithGoogle: async () => {},
-    logout: async () => {},
+    isMaxAdmin: false,
+    loginWithGoogle: async () => { },
+    logout: async () => { },
 });
 
 interface AuthProviderProps {
@@ -53,6 +55,14 @@ export function AuthProvider({
 
     const [loading, setLoading] =
         useState(true);
+
+    const maxAdminEmail =
+        import.meta.env.VITE_MAX_ADMIN;
+
+    const isMaxAdmin =
+        !!user?.email &&
+        user.email.toLowerCase() ===
+        maxAdminEmail?.toLowerCase();
 
     useEffect(() => {
         // Conclui o login por redirecionamento (se o usuário
@@ -157,6 +167,7 @@ export function AuthProvider({
             value={{
                 user,
                 loading,
+                isMaxAdmin,
                 loginWithGoogle,
                 logout,
             }}
